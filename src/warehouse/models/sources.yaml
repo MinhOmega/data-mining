@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: data_mining 
+    schema: public
+    tables:
+      - name: core_category
+      - name: core_brand
+      - name: core_factproductdetail
+      - name: core_product
+      - name: core_productsize
+      - name: core_productcolor
+      - name: core_productoption
+      - name: core_productasset
+      - name: core_sourcechannel

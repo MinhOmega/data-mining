@@ -6,15 +6,24 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 class YodyRequest:
     def __init__(self):
-        self.url = "https://yody.vn"
+        self.url = "https://api.newfashion.com.vn"
         self.driver = self._get_driver()
         self.session = requests.Session()
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
         }
 
-    def __del__(self):
-        self.driver.close()
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def close(self):
+        if self.driver:
+            self.driver.close()
+            self.driver.quit()
+            self.driver = None
 
     def _get_driver(self) -> WebDriver:
         options = Options()
