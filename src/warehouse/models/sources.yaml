@@ -13,3 +13,4 @@ sources:
       - name: core_productoption
       - name: core_productasset
       - name: core_sourcechannel
+      - name: core_coreproduct

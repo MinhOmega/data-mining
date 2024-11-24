@@ -3,7 +3,7 @@ from kafka import KafkaProducer
 
 class KafkaClient:
     def __init__(self):
-        self.kafka_server = "localhost:9092"
+        self.kafka_server = "localhost:19092"
         self.producer = KafkaProducer(
             bootstrap_servers=self.kafka_server,
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),

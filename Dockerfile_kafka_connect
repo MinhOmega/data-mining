@@ -1,0 +1,28 @@
+# Start from Apache Kafka image
+FROM apache/kafka:latest
+
+# Work directory inside Kafka
+WORKDIR /opt/kafka
+
+# Install required tools (curl for downloading)
+USER root
+RUN apk update && apk add --no-cache curl
+
+# Create a directory for plugins
+RUN mkdir -p /opt/kafka/plugins
+
+# Copy necessary scripts into the container
+COPY scripts/entrypoint.sh /opt/kafka/
+COPY scripts/plugins.sh /opt/kafka/
+
+# Set permissions for the scripts
+RUN chmod +x /opt/kafka/entrypoint.sh /opt/kafka/plugins.sh
+
+# Install plugins
+RUN bash /opt/kafka/plugins.sh
+
+# Debug: Check plugin installation
+RUN ls -l /opt/kafka/plugins && ls -l /opt/kafka/plugins/jdbc
+
+# Expose the Kafka Connect REST API port
+EXPOSE 8083

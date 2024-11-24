@@ -115,3 +115,12 @@ class FactProductDetail(TimeStampedModel, StatusModel): # Fact table for product
 
     def __str__(self):
         return f"Detail for {self.product.name}"
+
+
+class CoreProduct(models.Model):
+    product_data = models.JSONField()
+
+    class Meta:
+        db_table = 'core_coreproduct'  # Tên bảng trong PostgreSQL
+        verbose_name = 'Core Product'
+        verbose_name_plural = 'Core Products'

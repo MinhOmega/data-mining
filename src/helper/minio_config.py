@@ -15,9 +15,9 @@ class MinIOClient:
         self.bucket_name = "datalake"
 
         # Create bucket if it doesn't exist
-        if not self.client.bucket_exists(self.bucket_name):
-            self.client.make_bucket(self.bucket_name)
-            print(f"Bucket '{self.bucket_name}' created successfully.")
+        # if not self.client.bucket_exists(self.bucket_name):
+        #     self.client.make_bucket(self.bucket_name)
+        #     print(f"Bucket '{self.bucket_name}' created successfully.")
 
     def upload_json(self, data: dict, file_path: str):
         """Upload JSON data to MinIO."""

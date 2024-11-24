@@ -16,6 +16,7 @@ apache-airflow-providers-http==4.13.2
 apache-airflow-providers-imap==3.7.0
 apache-airflow-providers-smtp==1.8.0
 apache-airflow-providers-sqlite==3.9.0
+apache-airflow-providers-openlineage>=1.8.0
 apispec==6.7.1
 argcomplete==3.5.1
 argon2-cffi==23.1.0
@@ -87,6 +88,7 @@ Flask-SQLAlchemy==2.5.1
 Flask-WTF==1.2.2
 frozenlist==1.5.0
 fsspec==2024.10.0
+git-filter-repo==2.45.0
 google-re2==1.1.20240702
 greenlet==3.1.1
 grpcio==1.68.0
@@ -236,3 +238,7 @@ WTForms==3.2.1
 xattr==1.1.0
 yarl==1.17.2
 zipp==3.21.0
+azure-storage-blob==12.16.0
+azure-core>=1.26.4
+pyarrow==10.0.1
+snowflake-connector-python>=2.7.12

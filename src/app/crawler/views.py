@@ -59,79 +59,66 @@ class YodyProductExtractView(APIView):
             return Response({"message": "Product extraction initiated successfully."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
 
-# Load Yody products from MinIO to Postgres
+
+# Load Yody products from MinIO to PostgreSQL
 class YodyProductLoadView(APIView):
     def post(self, request):
+        status_param = request.data.get("status", "active")
+
+        try:
+            # Run the loading process
+            loader = LoadProductData()
+            loader.run_load(status=status_param)
+            return Response({"message": "Product loading initiated successfully."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+# Trigger Yody products from MinIO to Kafka
+class DAGTriggerYodyProductView(APIView):
+    def post(self, request):
         serializer = ProductLoadRequestSerializer(data=request.data)
-        print(f"Request data: {request.data}")
         if serializer.is_valid():
             bucket_name = serializer.validated_data["bucket_name"]
             object_name = serializer.validated_data["object_name"]
 
-            print(f"Loading data from MinIO bucket: {bucket_name}, object: {object_name}")
-
             try:
-                # Load data from MinIO to Postgres
-                loader = LoadProductData(bucket_name, object_name)
-                data = loader.execute()
+                # Step 1: Trigger Airflow DAG
+                airflow_url = "http://localhost:8088/api/v1/dags/minio_to_kafka_dynamic/dagRuns"
+                response = requests.post(
+                    airflow_url,
+                    json={
+                        "conf": {  # Pass MinIO params to the DAG
+                            "bucket_name": bucket_name,
+                            "object_name": object_name,
+                        }
+                    },
+                    auth=("admin", "admin"),  # Airflow username and password
+                    headers={"Content-Type": "application/json"},
+                )
 
-                # Perform data loading to Postgres
-                for item in data:
-                    # print(item)
-                    # Insert or update Category
-                    try:
-                        category, _ = Category.objects.update_or_create(
-                            category_id=item["category_id"],
-                            defaults={
-                                "name": item["category"],
-                                "description": item["category"],
-                            }
-                        )
-                    except Exception as e:
-                        print(f"Error inserting Category: {str(e)}")
+                # Step 2: Handle Airflow Response
+                if response.status_code == 200:
+                    return Response(
+                        {"message": "DAG triggered successfully."},
+                        status=status.HTTP_200_OK,
+                    )
+                elif response.status_code == 404:
+                    return Response(
+                        {"error": "Airflow DAG not found. Ensure DAG ID is correct and registered."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+                else:
+                    return Response(
+                        {
+                            "error": f"Failed to trigger Airflow DAG. Status: {response.status_code}",
+                            "details": response.json(),
+                        },
+                        status=response.status_code,
+                    )
 
-                    # Insert or update Brand
-                    try:
-                        brand, _ = Brand.objects.update_or_create(
-                            brand_id=item["brand_id"],
-                            defaults={
-                                "brand_name": item["brand"],
-                            }
-                        )
-                    except Exception as e:
-                        print(f"Error inserting Brand: {str(e)}")
-
-                return Response({"message": "Product data loaded to Postgres successfully."}, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        
-# Trigger the Yody consumer DAG in Airflow
-class TriggerYodyConsumerView(APIView):
-    def post(self, request):
-        # URL to trigger the Airflow DAG
-        airflow_url = "http://localhost:8081/api/v1/dags/yody_consumer_dag/dagRuns"
-
-        try:
-            response = requests.post(
-                airflow_url,
-                json={"conf": {}},  # Optional: Pass DAG run configuration
-                auth=("airflow", "airflow"),  # Replace with your Airflow username and password
-            )
-            if response.status_code == 200:
-                return Response(
-                    {"message": "Yody consumer DAG triggered successfully."},
-                    status=status.HTTP_200_OK,
-                )
-            else:
-                return Response(
-                    {"error": response.json()},
-                    status=response.status_code,
-                )
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
