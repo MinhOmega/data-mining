@@ -1,6 +1,33 @@
 version: "3.9"
 
 services:
+  # Django Service
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=src.configs.settings
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - postgres
+      - minioserver
+
   # Dremio Service
   dremio:
     platform: linux/x86_64
@@ -39,9 +66,9 @@ services:
     container_name: postgres
     image: postgres:13
     environment:
+      POSTGRES_DB: airflow
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
     ports:
       - "5433:5432"
     healthcheck:
@@ -50,6 +77,8 @@ services:
       retries: 5
       start_period: 5s
     restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   airflow-init:
     build:
@@ -67,7 +96,6 @@ services:
     command: >
         bash -c "airflow db init && airflow db migrate &&
            airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin"
-
     volumes:
       - ./src/airflow/dags:/opt/airflow/dags
       - ./src/airflow/logs:/opt/airflow/logs
@@ -116,8 +144,6 @@ services:
       timeout: 20s
       retries: 5
       start_period: 90s
-    # networks:
-    #   - default
 
   airflow-scheduler:
     build:
